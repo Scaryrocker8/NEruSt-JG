@@ -2,7 +2,7 @@
 
 ![title](assets/icon.png)
 
-This is my first ongoing project of building an NES emulator (or any emulator for that matter).
+This is my first ongoing project of building a NES emulator.
 
 With a programming language I still need better experience with.
 
