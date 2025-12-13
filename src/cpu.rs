@@ -1,7 +1,7 @@
 #[derive(Debug)]
 
 /*
-Here we are implementing a first program for the CPU.
+Here we are implementing a test program for the CPU.
 The program looks like this: a9 c0 aa e8 00
 
 Here is the program written out in assembly code:
@@ -9,9 +9,9 @@ LDA #$C0 ; a9 c0
 TAX      ; aa
 INX      ; e8
 BRK      ; 00
-
 */
 
+// TODO - still a work in progress.
 pub struct CPU {
     pub register_a: u8,
     pub status: u8,
