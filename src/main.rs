@@ -10,12 +10,6 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 
-//#[macro_use]
-//extern crate lazy_static;
-
-//#[macro_use]
-//extern crate bitflags;
-
 fn color(byte: u8) -> Color {
     match byte {
         0 => sdl2::pixels::Color::BLACK,
@@ -89,7 +83,7 @@ fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
-        .window("Snake game", (32.0 * 10.0) as u32, (32.0 * 10.0) as u32)
+        .window("Snake game", (64.0 * 10.0) as u32, (64.0 * 10.0) as u32)
         .position_centered()
         .build()
         .unwrap();
@@ -129,7 +123,7 @@ fn main() {
 
     //load the game
     let mut cpu = CPU::new();
-    cpu.load(game_code);
+    cpu.load_at(game_code, 0x0600);
     cpu.reset();
 
     let mut screen_state = [0 as u8; 32 * 3 * 32];

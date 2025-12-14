@@ -47,9 +47,21 @@ pub enum AddressingMode {
 
 pub trait Memory {
     fn mem_read(&self, addr: u16) -> u8;
+
     fn mem_write(&mut self, addr: u16, value: u8);
-    fn mem_read_u16(&self, addr: u16) -> u16;
-    fn mem_write_u16(&mut self, addr: u16, value: u16);
+
+    fn mem_read_u16(&self, pos: u16) -> u16 {
+        let low = self.mem_read(pos);
+        let high = self.mem_read(pos + 1);
+        (high as u16) << 8 | (low as u16)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, value: u16) {
+        let high = (value >> 8) as u8;
+        let low = (value & 0xFF) as u8;
+        self.mem_write(pos, low);
+        self.mem_write(pos + 1, high);
+    }
 }
 
 impl Memory for CPU {
@@ -59,19 +71,6 @@ impl Memory for CPU {
 
     fn mem_write(&mut self, addr: u16, value: u8) {
         self.memory[addr as usize] = value;
-    }
-
-    fn mem_read_u16(&self, addr: u16) -> u16 {
-        let low = self.mem_read(addr);
-        let high = self.mem_read(addr + 1);
-        (high as u16) << 8 | (low as u16)
-    }
-
-    fn mem_write_u16(&mut self, addr: u16, value: u16) {
-        let low = (value & 0xFF) as u8;
-        let high = (value >> 8) as u8;
-        self.mem_write(addr, low);
-        self.mem_write(addr + 1, high);
     }
 }
 
@@ -232,8 +231,14 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x6000..(0x6000 + program.len())].copy_from_slice(&program);
-        self.mem_write_u16(0xFFFC, 0x6000);
+        self.load_at(program, 0x6000); // Default to 0x6000 for backward compatibility
+    }
+
+    pub fn load_at(&mut self, program: Vec<u8>, start_addr: u16) {
+        let start = start_addr as usize;
+        let end = start + program.len();
+        self.memory[start..end].copy_from_slice(&program);
+        self.mem_write_u16(0xFFFC, start_addr);
     }
 
     pub fn reset(&mut self) {
@@ -747,12 +752,12 @@ impl CPU {
                 }
 
                 // LDX
-                0xa6 | 0xb6 | 0xae | 0xbe => {
+                0xa2 | 0xa6 | 0xb6 | 0xae | 0xbe => {
                     self.ldx(&opcode.mode);
                 }
 
                 // LDY
-                0xa4 | 0xb4 | 0xac | 0xbc => {
+                0xa0 | 0xa4 | 0xb4 | 0xac | 0xbc => {
                     self.ldy(&opcode.mode);
                 }
 
@@ -790,7 +795,7 @@ impl CPU {
                     self.update_zero_and_negative_flags(self.register_a);
                 }
 
-                _ => todo!(),
+                _ => todo!("Opcode {:02x} is not yet implemented", code),
             }
 
             if program_counter_state == self.program_counter {
