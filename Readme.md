@@ -14,6 +14,8 @@ Surely it can be done, right?
 
 NES Ebook - https://bugzmanov.github.io/nes_ebook/chapter_1.html
 
+NES Ebook Source Code - https://github.com/bugzmanov/nes_ebook
+
 6502 Reference - https://www.nesdev.org/obelisk-6502-guide/reference.html
 
 I will be looking to improve upon this implementation as well as try to add extra features!
