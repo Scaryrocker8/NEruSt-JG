@@ -1,3 +1,4 @@
+pub mod bus;
 pub mod cpu;
 pub mod opcodes;
 
@@ -79,7 +80,7 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
 }
 
 fn main() {
-    // init sdl2
+    // Init SDL2
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
@@ -121,7 +122,7 @@ fn main() {
         0x60, 0xa6, 0xff, 0xea, 0xea, 0xca, 0xd0, 0xfb, 0x60,
     ];
 
-    //load the game
+    // Load the game
     let mut cpu = CPU::new();
     cpu.load_at(game_code, 0x0600);
     cpu.reset();
@@ -129,7 +130,7 @@ fn main() {
     let mut screen_state = [0 as u8; 32 * 3 * 32];
     let mut rng = rand::rng();
 
-    // run the game cycle
+    // Run the game cycle
     cpu.run_with_callback(move |cpu| {
         handle_user_input(cpu, &mut event_pump);
 

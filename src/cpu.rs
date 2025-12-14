@@ -1,3 +1,4 @@
+use crate::bus::Bus;
 use crate::opcodes;
 use bitflags::bitflags;
 use std::collections::HashMap;
@@ -17,7 +18,7 @@ bitflags! {
     }
 }
 
-const STACK: u16 = 0x0100;
+pub const STACK: u16 = 0x0100;
 const STACK_RESET: u8 = 0xfd;
 
 pub struct CPU {
@@ -27,7 +28,7 @@ pub struct CPU {
     pub status: CpuFlags,
     pub program_counter: u16,
     pub stack_pointer: u8,
-    memory: [u8; 0xFFFF],
+    pub bus: Bus,
 }
 
 #[derive(Debug)]
@@ -66,11 +67,19 @@ pub trait Memory {
 
 impl Memory for CPU {
     fn mem_read(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
+        self.bus.mem_read(addr)
     }
 
     fn mem_write(&mut self, addr: u16, value: u8) {
-        self.memory[addr as usize] = value;
+        self.bus.mem_write(addr, value);
+    }
+
+    fn mem_read_u16(&self, pos: u16) -> u16 {
+        self.bus.mem_read_u16(pos)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, value: u16) {
+        self.bus.mem_write_u16(pos, value);
     }
 }
 
@@ -83,7 +92,7 @@ impl CPU {
             stack_pointer: STACK_RESET,
             program_counter: 0,
             status: CpuFlags::from_bits_truncate(0b100100),
-            memory: [0; 0xFFFF],
+            bus: Bus::new(),
         }
     }
 
@@ -231,13 +240,16 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.load_at(program, 0x6000); // Default to 0x6000 for backward compatibility
+        for i in 0..(program.len() as u16) {
+            self.mem_write(0x0000 + i, program[i as usize]);
+        }
+        self.mem_write_u16(0xFFFC, 0x0000);
     }
 
     pub fn load_at(&mut self, program: Vec<u8>, start_addr: u16) {
-        let start = start_addr as usize;
-        let end = start + program.len();
-        self.memory[start..end].copy_from_slice(&program);
+        for (i, byte) in program.iter().enumerate() {
+            self.mem_write(start_addr + i as u16, *byte);
+        }
         self.mem_write_u16(0xFFFC, start_addr);
     }
 
