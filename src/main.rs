@@ -2,7 +2,7 @@ pub mod cpu;
 pub mod opcodes;
 
 use cpu::CPU;
-use cpu::Mem;
+use cpu::Memory;
 use rand::Rng;
 use sdl2::EventPump;
 use sdl2::event::Event;
@@ -10,11 +10,11 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 
-#[macro_use]
-extern crate lazy_static;
+//#[macro_use]
+//extern crate lazy_static;
 
-#[macro_use]
-extern crate bitflags;
+//#[macro_use]
+//extern crate bitflags;
 
 fn color(byte: u8) -> Color {
     match byte {
@@ -133,13 +133,13 @@ fn main() {
     cpu.reset();
 
     let mut screen_state = [0 as u8; 32 * 3 * 32];
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // run the game cycle
     cpu.run_with_callback(move |cpu| {
         handle_user_input(cpu, &mut event_pump);
 
-        cpu.mem_write(0xfe, rng.gen_range(1, 16));
+        cpu.mem_write(0xfe, rng.random_range(1..16));
 
         if read_screen_state(cpu, &mut screen_state) {
             texture.update(None, &screen_state, 32 * 3).unwrap();
