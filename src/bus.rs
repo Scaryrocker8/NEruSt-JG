@@ -1,3 +1,4 @@
+use crate::cartridge::Rom;
 use crate::cpu::Memory;
 
 const RAM: u16 = 0x0000;
@@ -10,15 +11,23 @@ const ROM_END: u16 = 0xFFFF;
 
 pub struct Bus {
     cpu_vram: [u8; 2048],
-    prg_rom: [u8; 0x8000],
+    rom: Rom,
 }
 
 impl Bus {
-    pub fn new() -> Self {
+    pub fn new(rom: Rom) -> Self {
         Bus {
             cpu_vram: [0; 2048],
-            prg_rom: [0; 0x8000],
+            rom: rom,
         }
+    }
+
+    fn read_prg_rom(&self, mut addr: u16) -> u8 {
+        addr -= 0x8000;
+        if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+            addr = addr % 0x4000;
+        }
+        self.rom.prg_rom[addr as usize]
     }
 }
 
@@ -33,10 +42,7 @@ impl Memory for Bus {
                 let _mirror_down_addr = addr & 0b00100000_00000111;
                 todo!("PPU_REGISTERS not implemented");
             }
-            ROM..=ROM_END => {
-                let map_addr = addr - ROM;
-                self.prg_rom[map_addr as usize]
-            }
+            0x8000..=0xFFFF => self.read_prg_rom(addr),
             _ => {
                 println!("Ignoring memory address at {}", addr);
                 0
@@ -54,9 +60,8 @@ impl Memory for Bus {
                 let _mirror_down_addr = addr & 0b00100000_00000111;
                 todo!("PPU_REGISTERS not implemented");
             }
-            ROM..=ROM_END => {
-                let map_addr = addr - ROM;
-                self.prg_rom[map_addr as usize] = value;
+            0x8000..=0xFFFF => {
+                panic!("Cannot write to ROM");
             }
             _ => {
                 println!("Ignoring memory write-address at {}", addr);

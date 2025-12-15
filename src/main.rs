@@ -123,7 +123,8 @@ fn main() {
     ];
 
     // Load the game
-    let mut cpu = CPU::new();
+    // TODO - still need to implement bus
+    let mut cpu = CPU::new(Bus::new(Rom::new(&game_code)));
     cpu.load_at(game_code, 0x0600);
     cpu.reset();
 
