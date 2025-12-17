@@ -6,9 +6,6 @@ const RAM_MIRRORS_END: u16 = 0x1fff;
 const PPU_REGISTERS: u16 = 0x2000;
 const PPU_REGISTERS_MIRRORS_END: u16 = 0x3fff;
 
-const ROM: u16 = 0x8000;
-const ROM_END: u16 = 0xFFFF;
-
 pub struct Bus {
     cpu_vram: [u8; 2048],
     rom: Rom,
@@ -53,7 +50,7 @@ impl Memory for Bus {
     fn mem_write(&mut self, addr: u16, value: u8) {
         match addr {
             RAM..=RAM_MIRRORS_END => {
-                let mirror_down_addr = addr & 0b11111111111;
+                let mirror_down_addr = addr & 0b00000111_11111111;
                 self.cpu_vram[mirror_down_addr as usize] = value;
             }
             PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {

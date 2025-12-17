@@ -1,6 +1,7 @@
 const NES_TAG: [u8; 4] = [0x4E, 0x45, 0x53, 0x1A];
-const PRG_ROM_PAGE_SIZE: usize = 16384;
-const CHR_ROM_PAGE_SIZE: usize = 8192;
+
+pub const PRG_ROM_PAGE_SIZE: usize = 16384;
+pub const CHR_ROM_PAGE_SIZE: usize = 8192;
 
 #[derive(Debug, PartialEq)]
 pub enum Mirroring {
@@ -54,5 +55,18 @@ impl Rom {
             mapper: mapper,
             screen_mirroring: screen_mirroring,
         })
+    }
+}
+
+pub mod test {
+    use super::*;
+
+    pub fn test_rom() -> Rom {
+        Rom {
+            prg_rom: vec![0; 2048],
+            chr_rom: vec![0; 2048],
+            mapper: 0,
+            screen_mirroring: Mirroring::Horizontal,
+        }
     }
 }

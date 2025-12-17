@@ -2,6 +2,11 @@
 mod tests {
     use nerust_jg::cartridge::{CHR_ROM_PAGE_SIZE, Mirroring, PRG_ROM_PAGE_SIZE, Rom};
 
+    // ============================================================================
+    // Test ROM Builder
+    // ============================================================================
+
+    /// Helper structure for building test ROM files
     struct TestRom {
         header: Vec<u8>,
         trainer: Option<Vec<u8>>,
@@ -9,6 +14,7 @@ mod tests {
         chr_rom: Vec<u8>,
     }
 
+    /// Creates a complete ROM file from components
     fn create_rom(rom: TestRom) -> Vec<u8> {
         let mut result = Vec::with_capacity(
             rom.header.len()
@@ -27,12 +33,19 @@ mod tests {
         result
     }
 
+    // ============================================================================
+    // Valid ROM Format Tests
+    // ============================================================================
+
     #[test]
     fn test_ines_no_version() {
         let test_rom = create_rom(TestRom {
             header: vec![
-                0x4E, 0x45, 0x53, 0x1A, 0x02, 0x01, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00,
+                0x4E, 0x45, 0x53, 0x1A, // NES magic number
+                0x02, // 2 PRG ROM pages
+                0x01, // 1 CHR ROM page
+                0x31, // Mapper and mirroring flags
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             ],
             trainer: None,
             prg_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
@@ -54,10 +67,10 @@ mod tests {
                 0x4E,
                 0x45,
                 0x53,
-                0x1A,
-                0x02,
-                0x01,
-                0x31 | 0b100,
+                0x1A,         // NES magic number
+                0x02,         // 2 PRG ROM pages
+                0x01,         // 1 CHR ROM page
+                0x31 | 0b100, // Mapper flags with trainer bit set
                 0x00,
                 0x00,
                 0x00,
@@ -68,7 +81,7 @@ mod tests {
                 0x00,
                 0x00,
             ],
-            trainer: Some(vec![0; 512]),
+            trainer: Some(vec![0; 512]), // 512-byte trainer
             prg_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
             chr_rom: vec![2; 1 * CHR_ROM_PAGE_SIZE],
         });
@@ -81,12 +94,16 @@ mod tests {
         assert_eq!(rom.screen_mirroring, Mirroring::Vertical);
     }
 
+    // ============================================================================
+    // Invalid ROM Format Tests
+    // ============================================================================
+
     #[test]
     fn test_ines_invalid_format() {
         let test_rom = create_rom(TestRom {
             header: vec![
-                0x4E, 0x45, 0x53, 0x1B, 0x02, 0x01, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00,
+                0x4E, 0x45, 0x53, 0x1B, // Invalid magic number (0x1B instead of 0x1A)
+                0x02, 0x01, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             ],
             trainer: None,
             prg_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
@@ -94,6 +111,7 @@ mod tests {
         });
 
         let rom = Rom::new(&test_rom);
+
         assert_eq!(
             rom.err(),
             Some("File is not an iNES file format".to_string())
@@ -104,15 +122,20 @@ mod tests {
     fn test_ines_unsupported_version() {
         let test_rom = create_rom(TestRom {
             header: vec![
-                0x4E, 0x45, 0x53, 0x1A, 0x01, 0x01, 0x31, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00,
+                0x4E, 0x45, 0x53, 0x1A, // NES magic number
+                0x01, // 1 PRG ROM page
+                0x01, // 1 CHR ROM page
+                0x31, // Mapper flags
+                0x08, // NES 2.0 format indicator (unsupported)
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             ],
             trainer: None,
             prg_rom: vec![1; 1 * PRG_ROM_PAGE_SIZE],
             chr_rom: vec![2; 1 * CHR_ROM_PAGE_SIZE],
         });
-        // 0x08 & 0b0000_1111 == 0x08. != 0.
+
         let rom = Rom::new(&test_rom);
+
         assert_eq!(
             rom.err(),
             Some("NES2.0 format is not supported".to_string())
